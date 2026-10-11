@@ -64,7 +64,7 @@ ask_bool() {
         if [[ "$value" == "y" || "$value" == "yes" ]]; then printf 'true\n'; return 0; fi
         if [[ "$value" == "n" || "$value" == "no" ]];  then printf 'false\n'; return 0; fi
         if [[ -z "$value" ]]; then
-            [[ "$default" == "Y" || "$default" == "y" ]] && { printf 'true\n'; return 0; }
+            if [[ "$default" == "Y" || "$default" == "y" ]]; then printf 'true\n'; return 0; fi
             printf 'false\n'; return 0
         fi
         warn "Please answer y or n." >&2
@@ -77,7 +77,7 @@ if python3 -c "import alpaca_trade_api, dotenv, openai, yaml, mcp" 2>/dev/null; 
     ok "All dependencies are installed (reinstalling?)"
     if [[ "${FORCE_REINSTALL:-}" == "1" ]]; then
         note "Reinstall forced (FORCE_REINSTALL=1)."
-    elif ! ask_bool "Reinstall everything from scratch" "N"; then
+    elif [[ "$(ask_bool "Reinstall everything from scratch" "N")" == "false" ]]; then
         note "Skipping dependency installation."
     else
         printf '%s' "Reinstalling..." >&2
@@ -114,7 +114,8 @@ note "Paper API = free simulation, no real money. Live = real orders, real money
 RECONFIG=""
 if [[ -f "$CONFIG_FILE" ]]; then
     note "Existing config.yaml found."
-    if ask_bool "Skip config and reuse current credentials" "Y"; then
+    SKIP_CONFIG=$(ask_bool "Skip config and reuse current credentials" "Y")
+    if [[ "$SKIP_CONFIG" == "true" ]]; then
         RECONFIG="Y"
     fi
 fi
