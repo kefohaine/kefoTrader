@@ -11,7 +11,13 @@ from .exec_alpaca import place_order, get_price, is_market_hours
 load_dotenv()
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
 log = logging.getLogger("worker")
-client = openai.OpenAI(api_key=os.getenv("LLM_API_KEY"))
+# OpenAI default; set LLM_BASE_URL (e.g. https://openrouter.ai/api/v1) and
+# LLM_MODEL (e.g. openai/gpt-4o-mini:free) to use another provider.
+client = openai.OpenAI(
+    api_key=os.getenv("LLM_API_KEY"),
+    base_url=os.getenv("LLM_BASE_URL"),
+)
+MODEL = os.getenv("LLM_MODEL", "gpt-4o-mini")
 
 def build_prompt(state, positions):
     pos = ", ".join(f"{p['symbol']}={p['qty']}" for p in positions) or "none"
@@ -41,7 +47,7 @@ def run_trading_task():
     prompt = build_prompt(state, positions)
     log.info("prompt: %s", prompt)
     try:
-        resp = client.chat.completions.create(model="gpt-4o-mini",
+        resp = client.chat.completions.create(model=MODEL,
             messages=[{"role":"user","content":prompt}], response_format={"type":"json_object"})
         decision = parse_decision(resp.choices[0].message.content)
     except Exception as e:

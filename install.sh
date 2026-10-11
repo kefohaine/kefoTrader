@@ -151,6 +151,19 @@ cfg = yaml.safe_load(open('$CONFIG_FILE'))
 print(str(cfg['risk']['paper_only']).lower())
 " 2>/dev/null) || PAPER="true"
     note "Reusing keys from config.yaml."
+    # write/update .env (gitignored - secrets never leave this machine)
+    printf '%s' "Setting env vars in .env...\n" >&2
+    # preserve an existing real LLM_API_KEY from the current .env rather than clobbering it
+    OLD_LLM=$(grep -m1 '^LLM_API_KEY=' .env 2>/dev/null | sed 's/^LLM_API_KEY=//')
+    if [[ -n "$OLD_LLM" && "$OLD_LLM" != "YOUR_OPENAI_API_KEY_HERE" ]]; then
+        LLM_KEY="$OLD_LLM"
+    fi
+    cat > .env <<EOF
+APCA_API_BASE_URL=${BASE_URL:-https://paper-api.alpaca.markets}
+APCA_API_KEY_ID=${API_KEY_ID:-YOUR_API_KEY_ID}
+APCA_API_SECRET_KEY=${API_SECRET:-YOUR_SECRET_KEY}
+LLM_API_KEY=${LLM_KEY:-YOUR_OPENAI_API_KEY_HERE}
+EOF
 else
     API_KEY_ID=$(ask_required "Alpaca API Key ID (dashboard > API Settings)")
     API_SECRET=$(ask_required "Alpaca Secret Key (dashboard > API Settings)")
@@ -166,6 +179,17 @@ else
         note "Paper (simulated) mode selected - no real money involved."
         AUTO="false"; DRY="true"; PAPER="true"
     fi
+    printf '%s' " LLM API key (OpenAI or OpenRouter; leave blank to skip): " >&2
+    LLM_KEY=""
+    read -r -t 60 LLM_KEY || LLM_KEY=""
+    # write .env (gitignored - secrets never leave this machine)
+    printf '%s' "Setting env vars in .env...\n" >&2
+    cat > .env <<EOF
+APCA_API_BASE_URL=${BASE_URL:-https://paper-api.alpaca.markets}
+APCA_API_KEY_ID=${API_KEY_ID:-YOUR_API_KEY_ID}
+APCA_API_SECRET_KEY=${API_SECRET:-YOUR_SECRET_KEY}
+LLM_API_KEY=${LLM_KEY:-YOUR_OPENAI_API_KEY_HERE}
+EOF
 fi
 
 # --- STEP 3: write config.yaml ---------------------------------
