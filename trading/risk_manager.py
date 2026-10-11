@@ -74,7 +74,7 @@ class RiskManager:
         value = quantity * price
         if value > self.limits.max_order_size_usd:
             return False, f"order ${value:.0f} > ${self.limits.max_order_size_usd}"
-        positions = ALPACA.get_positions()
+        positions = ALPACA.list_positions()
         long_val = sum(float(p.market_value) for p in positions if p.side == "long")
         if long_val + value > self.limits.max_open_exposure_usd:
             return False, f"exposure ${long_val + value:.0f} > ${self.limits.max_open_exposure_usd}"

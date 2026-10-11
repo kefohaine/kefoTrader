@@ -12,7 +12,7 @@ sys.path.insert(0, "/root/kefoTrader")
 mock_rest = MagicMock()
 mock_acct = MagicMock(cash="10000.0", equity="10000.0", buying_power="10000.0")
 mock_rest.get_account.return_value = mock_acct
-mock_rest.get_positions.return_value = []
+mock_rest.list_positions.return_value = []
 mock_resp = MagicMock()
 mock_resp.choices = [MagicMock(message=MagicMock(content='{"action":"buy","symbol":"AAPL","qty":0.05,"confidence":95.5,"limit_price":null}'))]
 

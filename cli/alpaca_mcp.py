@@ -34,7 +34,7 @@ async def call_tool(request: CallToolRequest) -> CallToolResult:
         a = rest.get_account()
         return CallToolResult(content=[TextContent(type="text", text="status=%s cash=$%.2f bp=$%.2f" % (a.status, float(a.cash), float(a.buying_power)))])
     if name == "positions":
-        return CallToolResult(content=[TextContent(type="text", text=json.dumps([{"symbol": p.symbol, "qty": p.qty, "market_value": p.market_value} for p in rest.get_positions()], indent=2))])
+        return CallToolResult(content=[TextContent(type="text", text=json.dumps([{"symbol": p.symbol, "qty": p.qty, "market_value": p.market_value} for p in rest.list_positions()], indent=2))])
     if name == "orders":
         return CallToolResult(content=[TextContent(type="text", text=json.dumps(rest.get_orders(), indent=2))])
     if name in ("buy", "sell"):

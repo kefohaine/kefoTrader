@@ -33,7 +33,7 @@ def parse_decision(text):
 def run_trading_task():
     try:
         acct = ALPACA.get_account()
-        positions = [{"symbol": p.symbol, "qty": p.qty} for p in ALPACA.get_positions()]
+        positions = [{"symbol": p.symbol, "qty": p.qty} for p in ALPACA.list_positions()]
         state = {"cash": float(acct.cash), "equity": float(acct.equity), "buying_power": float(acct.buying_power)}
     except Exception as e:
         log.error(f"Account fetch failed (missing/invalid Alpaca keys?): {e}"); return

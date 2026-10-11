@@ -21,7 +21,7 @@ class TestRiskManager(unittest.TestCase):
         self.mock_rest = MagicMock()
         self.mock_acct = MagicMock(cash="10000.0", equity="10000.0", buying_power="10000.0")
         self.mock_rest.get_account.return_value = self.mock_acct
-        self.mock_rest.get_positions.return_value = []
+        self.mock_rest.list_positions.return_value = []
         rm.ALPACA = self.mock_rest
         rm.Limits.paper_only = True
         rm.Limits.auto_execute = False
@@ -38,7 +38,7 @@ class TestRiskManager(unittest.TestCase):
     def _acct(self, cash="10000.0", positions=()):
         a = MagicMock(cash=cash, equity="10000.0", buying_power="10000.0")
         rm.ALPACA.get_account.return_value = a
-        rm.ALPACA.get_positions.return_value = positions
+        rm.ALPACA.list_positions.return_value = positions
         return a
 
     def test_default_config(self):
@@ -61,7 +61,7 @@ class TestRiskManager(unittest.TestCase):
         self._acct()
         ok, msg = r.check("buy", "AAPL", 0.05, 200.0, 60.0)
         self.assertFalse(ok)
-        self.assertIn("confidence 60.0% < 90.0%", msg)
+        self.assertIn("confidence 60.0% < 90%", msg)
 
     def test_fail_order_over_max_size(self):
         r = rm.RiskManager()
