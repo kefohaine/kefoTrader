@@ -38,7 +38,10 @@ class RiskManager:
         self.sf = pathlib.Path(".risk_state.json"); self.limits = Limits()
 
     def _today(self):
-        return {k: v for k, v in json.loads(self.sf.read_text("{}"), default={}).get("today", {}).items()}
+        try:
+            return {k: v for k, v in json.loads(self.sf.read_text()).get("today", {}).items()}
+        except (FileNotFoundError, json.JSONDecodeError):
+            return {}
 
     def check(self, action, symbol, quantity, price, confidence):
         reasons = []

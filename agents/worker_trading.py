@@ -1,5 +1,9 @@
 """AI trading worker: prompt -> LLM -> risk gate -> (optionally) execute."""
-import os, json, logging, openai
+import sys, os
+root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+sys.path.insert(0, root)
+sys.path.insert(0, os.path.join(root, 'scripts'))
+import json, logging, openai
 from dotenv import load_dotenv
 from risk_manager import RiskManager, ALPACA
 from exec_alpaca import place_order, get_price, is_market_hours
@@ -27,10 +31,13 @@ def parse_decision(text):
         return None
 
 def run_trading_task():
+    try:
+        acct = ALPACA.get_account()
+        positions = [{"symbol": p.symbol, "qty": p.qty} for p in ALPACA.get_positions()]
+        state = {"cash": float(acct.cash), "equity": float(acct.equity), "buying_power": float(acct.buying_power)}
+    except Exception as e:
+        log.error(f"Account fetch failed (missing/invalid Alpaca keys?): {e}"); return
     rm = RiskManager()
-    acct = ALPACA.get_account()
-    positions = [{"symbol": p.symbol, "qty": p.qty} for p in ALPACA.get_positions()]
-    state = {"cash": float(acct.cash), "equity": float(acct.equity), "buying_power": float(acct.buying_power)}
     prompt = build_prompt(state, positions)
     try:
         resp = client.chat.completions.create(model="gpt-4o-mini",
