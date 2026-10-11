@@ -5,3 +5,4 @@ __pycache__
 *.log
 auto.log
 .kill
+pycache/__pycache__
