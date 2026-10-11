@@ -37,3 +37,5 @@ while not os.path.exists(KILL):
         execute(d)
     last = s
     time.sleep(60)
+
+from risk_manager import RiskManager
