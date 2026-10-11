@@ -4,9 +4,10 @@ Minimal AI-driven paper-trading scaffold on Alpaca (paper/live API), runnable fr
 **Auto-execute is OFF by default** — the system analyzes, warns, and logs what it would do; no orders are sent.
 
 ## Setup
-1. Run `./install.sh` — it installs all dependencies, prompts for your Alpaca API Key ID, Secret, and Base URL (rejecting empty or placeholder values), and writes a gitignored `config.yaml` with paper-safe defaults (`auto_execute=false, dry_run=true, paper_only=true`). You may edit `config.yaml` directly instead.
-2. Install deps manually as an alternative: `pip install alpaca-trade-api python-dotenv openai pyyaml`
+1. Run `./install.sh` — it installs all dependencies, prompts for your Alpaca API Key ID, Secret, and whether you want **paper or live** mode, and writes a gitignored `config.yaml` with paper-safe defaults (`auto_execute=false, dry_run=true, paper_only=true`). You may edit `config.yaml` directly instead.
+2. Install deps manually as an alternative: `pip install alpaca-trade-api python-dotenv openai pyyaml mcp`
 3. Add an OpenAI key to your shell env: `export LLM_API_KEY=...`
+4. Secrets also support a local `.env` file (loaded by the interactive CLI): set `APCA_API_KEY_ID`, `APCA_API_SECRET_KEY`, `APCA_API_BASE_URL`, `LLM_API_KEY` there. Never commit it.
 
 ## Usage
 - Interactive paper CLI: `./paper.sh <positions|orders|buy|sell> <symbol> <qty>`

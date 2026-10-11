@@ -1,3 +1,16 @@
-#!/bin/bash
-# LIVE trading — real money, Alpaca production URL
-APCA_API_BASE_URL="https://data.alpaca.markets" python3 "$(dirname "$0")/cli/paper_trader.py" "$@"
+#!/usr/bin/env bash
+# LIVE trading (real money) — interactive if no args, passthrough if given.
+export APCA_API_BASE_URL="https://data.alpaca.markets"
+SCRIPT="$(dirname "$0")/cli/paper_trader.py"
+
+if [[ $# -eq 0 ]]; then
+    printf '%sLIVE trading (real money - use with caution)%s\n\n' "${BOLD:-}" "${NC:-}" >&2 2>/dev/null || true
+    read -rp "Action (positions|orders|buy|sell): " ACTION
+    [[ -n "$ACTION" ]] || ACTION="positions"
+    read -rp "Symbol (e.g. AAPL): " SYMBOL
+    [[ -n "$SYMBOL" ]] || SYMBOL="AAPL"
+    read -rp "Quantity:" QTY
+    [[ -n "$QTY" ]] || QTY="1"
+    exec python3 "$SCRIPT" "$ACTION" "$SYMBOL" "$QTY"
+fi
+exec python3 "$SCRIPT" "$@"

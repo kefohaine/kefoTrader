@@ -9,17 +9,16 @@ def main():
     if len(sys.argv) < 2:
         a = rest.get_account()
         print("status:", a.status, "| cash: $%.2f" % float(a.cash), "| buying power: $%.2f" % float(a.buying_power))
-        print("positions:", [p.symbol for p in rest.get_positions()])
+        print("positions:", [p.symbol for p in rest.list_positions()])
         return
     cmd = sys.argv[1]
     if cmd == "positions":
-        print(json.dumps([{"symbol": p.symbol, "qty": p.qty, "market_value": p.market_value} for p in rest.get_positions()], indent=2))
+        print(json.dumps([{"symbol": p.symbol, "qty": p.qty, "market_value": p.market_value} for p in rest.list_positions()], indent=2))
     elif cmd == "orders":
-        print(json.dumps(rest.get_orders(), indent=2))
+        print(json.dumps(rest.list_orders(), indent=2))
     elif cmd in ("buy", "sell"):
         symbol, qty = sys.argv[2], float(sys.argv[3])
-        t = api.OrderParams(symbol=symbol, qty=qty, side=cmd, type="market", time_in_force="day")
-        o = rest.submit_order(t)
+        o = rest.submit_order(symbol=symbol, qty=qty, side=cmd, type="market", time_in_force="day")
         print("order:", o.id, o.side, qty, "x", symbol, o.status)
     else:
         print("usage: paper_trader.py [positions|orders|buy|sell] <symbol> <qty>")
