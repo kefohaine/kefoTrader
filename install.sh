@@ -10,7 +10,7 @@ set -euo pipefail
 RED=$'\033[0;31m'
 GREEN=$'\033[0;32m'
 YELLOW=$'\033[1;33m'
-BLUE=$'\033[0;34m'
+ORANGE=$'\033[0;33m'
 NC=$'\033[0m'
 
 PROJECT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -19,8 +19,34 @@ DASHES='------------------------------------------------------------'
 
 fail() { printf '\n%sERROR: %s%s\n' "$RED" "$1" "$NC"; exit 1; }
 ok()     { printf '%sOK  %s\n' "$GREEN" "$1"; }
-note()   { printf '%sNOTE: %s\n' "$BLUE" "$1"; }
+note()   { printf '%sNOTE: %s\n' "$ORANGE" "$1"; }
 warn()   { printf '%sWARN: %s\n' "$YELLOW" "$1"; }
+
+# Read the live goose config (provider + model) for goose compatibility.
+# The goose vault API keys cannot be read by the installer; only provider
+# name and model are applied. Exports: GOOSE_COMPATIBLE, GOOSE_PROVIDER, GOOSE_MODEL.
+read_goose_config() {
+    local cfg="/root/.config/goose/config.yaml"
+    [[ -f "$cfg" ]] || return 1
+    local active
+    active=$(python3 -c "
+import yaml
+try:
+    print(yaml.safe_load(open('$cfg')).get('active_provider',''))
+except Exception: print('')
+" 2>/dev/null)
+    [[ -n "$active" ]] || return 1
+    export GOOSE_COMPATIBLE="true"
+    export GOOSE_PROVIDER="$active"
+    export GOOSE_MODEL=$(python3 -c "
+import yaml
+try:
+    print(yaml.safe_load(open('$cfg')).get('providers',{}).get('$active',{}).get('model',''))
+except Exception: print('')
+" 2>/dev/null)
+    [[ -n "${GOOSE_MODEL:-}" ]] || { unset GOOSE_COMPATIBLE GOOSE_PROVIDER GOOSE_MODEL; return 1; }
+    return 0
+}
 
 step_header() {
     printf '\n%s\n' "$DASHES"
@@ -34,7 +60,12 @@ ask_required() {
     local prompt="$1"; local default="${2-}"
     local value
     while true; do
-        printf '%s%s%s: ' "$BLUE" "$prompt" "${default:+ [$default]}" "$NC" >&2
+        # balanced: prompt + optional possible value + colon
+        if [[ -n "${default:-}" ]]; then
+            printf '%s%s %s%s: ' "$ORANGE" "$prompt" "(possible value: ${default})" "$NC" >&2
+        else
+            printf '%s%s: ' "$ORANGE" "$prompt" "$NC" >&2
+        fi
         if ! IFS= read -r -t 60 value; then
             printf '\n' >&2
             warn "No input received. Aborting setup." >&2
@@ -56,7 +87,7 @@ ask_bool() {
     local prompt="$1"; local default="${2:-N}"
     local value
     while true; do
-        printf '%s%s [%s]: %s' "$BLUE" "$prompt" "${default^^}" "$NC" >&2
+        printf '%s%s%s%s: ' "$ORANGE" "$prompt" " (y/n)" "$NC" >&2
         if ! IFS= read -r -t 60 value; then
             value="$default"
         fi
@@ -158,16 +189,23 @@ print(str(cfg['risk']['paper_only']).lower())
     if [[ -n "$OLD_LLM" && "$OLD_LLM" != "YOUR_OPENAI_API_KEY_HERE" ]]; then
         LLM_KEY="$OLD_LLM"
     fi
+    if read_goose_config; then
+        printf '%sGoose compatible: active provider %s, model %s (vault key not readable by installer)%s\n' "$ORANGE" "$GOOSE_PROVIDER" "$GOOSE_MODEL" "$NC" >&2
+        [[ "$GOOSE_PROVIDER" == "openrouter" ]] && export LLM_BASE_URL="https://openrouter.ai/api/v1"
+        export LLM_MODEL="$GOOSE_MODEL"
+    fi
     cat > .env <<EOF
 APCA_API_BASE_URL=${BASE_URL:-https://paper-api.alpaca.markets}
 APCA_API_KEY_ID=${API_KEY_ID:-YOUR_API_KEY_ID}
 APCA_API_SECRET_KEY=${API_SECRET:-YOUR_SECRET_KEY}
+LLM_BASE_URL=${LLM_BASE_URL:-https://api.openai.com/v1}
+LLM_MODEL=${LLM_MODEL:-gpt-4o-mini}
 LLM_API_KEY=${LLM_KEY:-YOUR_OPENAI_API_KEY_HERE}
 EOF
 else
     API_KEY_ID=$(ask_required "Alpaca API Key ID (dashboard > API Settings)")
     API_SECRET=$(ask_required "Alpaca Secret Key (dashboard > API Settings)")
-    printf '%s' " Paper or live? [p]: " >&2
+    printf '%s' " Paper or live? (p/l): " >&2
     read -r -t 60 MODE || MODE=""
     MODE="${MODE,,}"
     if [[ "$MODE" == "l" || "$MODE" == "live" || "$MODE" == "y" || "$MODE" == "yes" ]]; then
@@ -179,7 +217,14 @@ else
         note "Paper (simulated) mode selected - no real money involved."
         AUTO="false"; DRY="true"; PAPER="true"
     fi
-    printf '%s' " LLM API key (OpenAI or OpenRouter; leave blank to skip): " >&2
+    if read_goose_config; then
+        printf '%sGoose compatible: active provider %s, model %s (vault key not readable by installer)%s\n' "$ORANGE" "$GOOSE_PROVIDER" "$GOOSE_MODEL" "$NC" >&2
+        [[ "$GOOSE_PROVIDER" == "openrouter" ]] && export LLM_BASE_URL="https://openrouter.ai/api/v1"
+        export LLM_MODEL="$GOOSE_MODEL"
+        printf '%s' "LLM API key for $GOOSE_PROVIDER (or export it first, e.g. OPENROUTER_API_KEY=...): " >&2
+    else
+        printf '%s' " LLM API key (OpenAI or OpenRouter; leave blank to skip): " >&2
+    fi
     LLM_KEY=""
     read -r -t 60 LLM_KEY || LLM_KEY=""
     # write .env (gitignored - secrets never leave this machine)
@@ -188,6 +233,8 @@ else
 APCA_API_BASE_URL=${BASE_URL:-https://paper-api.alpaca.markets}
 APCA_API_KEY_ID=${API_KEY_ID:-YOUR_API_KEY_ID}
 APCA_API_SECRET_KEY=${API_SECRET:-YOUR_SECRET_KEY}
+LLM_BASE_URL=${LLM_BASE_URL:-https://api.openai.com/v1}
+LLM_MODEL=${LLM_MODEL:-gpt-4o-mini}
 LLM_API_KEY=${LLM_KEY:-YOUR_OPENAI_API_KEY_HERE}
 EOF
 fi
@@ -261,4 +308,4 @@ printf '%sTo run paper:   ./paper.sh      (free simulator)\n' "$GREEN"
 printf '%sTo run live:    ./live.sh       (real money - use with caution)\n' "$GREEN"
 printf '%sTo run the auto-trader: nohup python3 trading/auto_trade.py > auto.log 2>&1 &\n' "$GREEN"
 printf '%sTo stop anytime: touch .kill\n' "$GREEN"
-printf '%s====================================================\n' "$BLUE"
+printf '%s====================================================\n' "$ORANGE"
