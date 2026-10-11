@@ -39,6 +39,7 @@ def run_trading_task():
         log.error(f"Account fetch failed (missing/invalid Alpaca keys?): {e}"); return
     rm = RiskManager()
     prompt = build_prompt(state, positions)
+    log.info("prompt: %s", prompt)
     try:
         resp = client.chat.completions.create(model="gpt-4o-mini",
             messages=[{"role":"user","content":prompt}], response_format={"type":"json_object"})
