@@ -15,6 +15,7 @@ Minimal AI-driven paper-trading scaffold on Alpaca (paper/live API), runnable fr
 - MCP server: `python3 -m cli.alpaca_mcp` (stdio)
 - AI autonomous loop: `python3 trading/auto_trade.py` (dry run unless config enables auto-execute)
 - Kill switch: `touch .kill` stops the loop immediately
+- **Known LLM key issue**: `install.sh` silently reuses a placeholder (`[SECRET:openrouter-api-key]`) when `read_goose_config` is active, so the loop fails at the LLM step with `401 Missing Authentication header` on direct OpenRouter calls. If the prompt did not persist your key, run the install step again (it now prompts) and pass a real OpenRouter API key; see `temp-issue.md` for details.
 
 ## File layout
 - `trading/` — core trading package:

@@ -186,13 +186,19 @@ print(str(cfg['risk']['paper_only']).lower())
     printf '%s' "Setting env vars in .env...\n" >&2
     # preserve an existing real LLM_API_KEY from the current .env rather than clobbering it
     OLD_LLM=$(grep -m1 '^LLM_API_KEY=' .env 2>/dev/null | sed 's/^LLM_API_KEY=//')
-    if [[ -n "$OLD_LLM" && "$OLD_LLM" != "YOUR_OPENAI_API_KEY_HERE" ]]; then
+    # reuse only a genuine key; placeholder/missing -> prompt below
+    if [[ -n "$OLD_LLM" && "$OLD_LLM" != "YOUR_OPENAI_API_KEY_HERE" && "$OLD_LLM" != "[SECRET:openrouter-api-key]" ]]; then
         LLM_KEY="$OLD_LLM"
     fi
     if read_goose_config; then
         printf '%sGoose compatible: active provider %s, model %s (vault key not readable by installer)%s\n' "$ORANGE" "$GOOSE_PROVIDER" "$GOOSE_MODEL" "$NC" >&2
         [[ "$GOOSE_PROVIDER" == "openrouter" ]] && export LLM_BASE_URL="https://openrouter.ai/api/v1"
         export LLM_MODEL="$GOOSE_MODEL"
+    fi
+    # prompt whenever no real key is available (fixes placeholder being reused instead of prompting)
+    if [[ -z "$LLM_KEY" ]]; then
+        printf '%s' "LLM API key (OpenRouter, strict free models: openrouter/free; leave blank to skip): " >&2
+        read -r -t 60 LLM_KEY || LLM_KEY=""
     fi
     cat > .env <<EOF
 APCA_API_BASE_URL=${BASE_URL:-https://paper-api.alpaca.markets}
