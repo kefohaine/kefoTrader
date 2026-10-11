@@ -1,7 +1,4 @@
 #!/bin/bash
 set -e
-pip install --quiet alpaca-trade-api python-dotenv openai pyyaml
-echo "edit config.yaml with your Alpaca paper keys, then:"
-echo "  ./paper.sh  - interactive paper CLI"
-echo "  ./live.sh   - interactive live CLI"
-echo "  python3 -m agents.worker_trading - one-shot AI analysis (dry run by default)"
+pip install --quiet alpaca-trade-api python-dotenv mcp
+echo "edit .env with your Alpaca paper API keys, then run scripts/auto_trade.py or ./paper.sh"

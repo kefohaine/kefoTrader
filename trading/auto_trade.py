@@ -3,7 +3,7 @@
 import os, sys, time, logging
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from dotenv import load_dotenv
-from agents.worker_trading import run_trading_task
+from trading.worker_trading import run_trading_task
 load_dotenv()
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
 log = logging.getLogger("autotrade")

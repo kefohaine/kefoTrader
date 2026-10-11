@@ -52,7 +52,7 @@ class RiskManager:
             return False, "paper_only limit: run against paper API first"
         if confidence < self.limits.min_confidence:
             return False, f"confidence {confidence}% < {self.limits.min_confidence}%"
-        if not self.limits.auto_execute and action in ("buy","sell"):
+        if not self.limits.auto_execute and action.lower() in ("buy","sell"):
             return False, "auto_execute disabled in config"
         value = quantity * price
         if value > self.limits.max_order_size_usd:

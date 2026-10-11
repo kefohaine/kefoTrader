@@ -1,5 +1,6 @@
 from unittest.mock import MagicMock, patch
 import sys, io, logging
+sys.path.insert(0, '/root/kefoTrader')
 
 mock_rest = MagicMock()
 mock_acct = MagicMock(cash="10000.0", equity="10000.0", buying_power="10000.0")
@@ -8,11 +9,11 @@ mock_rest.get_positions.return_value = []
 mock_resp = MagicMock()
 mock_resp.choices = [MagicMock(message=MagicMock(content='{"action":"buy","symbol":"AAPL","qty":0.05,"confidence":95.5,"limit_price":null}'))]
 
-with patch('openai.OpenAI') as M, patch('agents.worker_trading.ALPACA', mock_rest), patch('agents.worker_trading.RiskManager') as RM:
+with patch('openai.OpenAI') as M, patch('trading.worker_trading.ALPACA', mock_rest), patch('trading.worker_trading.RiskManager') as RM:
     RM.return_value.check.return_value = (True, "OK")
     RM.return_value.limits.dry_run = True
     M.return_value.chat.completions.create.return_value = mock_resp
-    import agents.worker_trading as w
+    from trading import worker_trading as w
     buf = io.StringIO()
     h = logging.StreamHandler(buf)
     w.log.addHandler(h)

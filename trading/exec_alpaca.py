@@ -1,7 +1,7 @@
 """Alpaca execution client (correct Bearer-key auth, not the guide's HMAC)."""
 import logging, datetime, zoneinfo, alpaca_trade_api as api
 from dotenv import load_dotenv
-from risk_manager import ALPACA
+from .risk_manager import ALPACA
 
 load_dotenv()
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")

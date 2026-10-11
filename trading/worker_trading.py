@@ -5,8 +5,8 @@ sys.path.insert(0, root)
 sys.path.insert(0, os.path.join(root, 'scripts'))
 import json, logging, openai
 from dotenv import load_dotenv
-from risk_manager import RiskManager, ALPACA
-from exec_alpaca import place_order, get_price, is_market_hours
+from .risk_manager import RiskManager, ALPACA
+from .exec_alpaca import place_order, get_price, is_market_hours
 
 load_dotenv()
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
