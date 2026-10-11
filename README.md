@@ -15,3 +15,7 @@ Minimal AI-driven paper-trading scaffold on Alpaca (paper/live API), runnable fr
 - AI autonomous loop: `python3 scripts/auto_trade.py`
 
 WARNING: This executes real Alpaca orders. Start on paper only, use tiny sizes, and test thoroughly before any live deployment.
+
+
+## Risk Management
+`scripts/risk_manager.py` gates every decision: KILL file, paper-only, confidence >= min_confidence, max order size, max open exposure, max daily trades, max daily loss. Import `RiskManager`, call `check(action, symbol, quantity, price, confidence)` before executing; set `limits.paper_only = False` and switch the API base URL only when you intend real money.
